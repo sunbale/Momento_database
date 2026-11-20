@@ -228,46 +228,669 @@ R:  _id: 1,
 O RH está fazendo uma análise demográfica da empresa.
 
 3.1 Quantos funcionários da empresa Momento possuem cônjuges?
+R: 4
+
+db.funcionarios.countDocuments({
+  dependentes: {
+    $elemMatch: {
+      relacionamento: "Cônjuge"
+    }
+  }
+})
 
 3.2 Quantos funcionários possuem filhos registrados?
+R: 30
+
+db.funcionarios.countDocuments({
+  dependentes: {
+    $elemMatch: {
+      relacionamento: "Filha(o)"
+    }
+  }
+})
 
 3.3 Qual funcionário foi contratado há mais tempo na empresa?
+R: primeiro_nome: 'Madeleine',
+  sobrenome: 'Prior',
+  data_contratacao: ISODate('1987-06-17T00:00:00.000Z')
+  
+  db.funcionarios.find(
+  {},
+  {
+    primeiro_nome: 1,
+    sobrenome: 1,
+    data_contratacao: 1,
+    _id: 0
+  }
+).sort({
+  data_contratacao: 1
+}).limit(1)
 
 3.4 Qual funcionário foi contratado há menos tempo na empresa?
+R:  primeiro_nome: 'Samus',
+  sobrenome: 'Aran',
+  data_contratacao: ISODate('2024-11-08T00:00:00.000Z')
+
+db.funcionarios.find(
+  {},
+  {
+    primeiro_nome: 1,
+    sobrenome: 1,
+    data_contratacao: 1,
+    _id: 0
+  }
+).sort({
+  data_contratacao: -1
+}).limit(1)
 
 3.5 Liste os 5 funcionários com mais tempo de casa, ordenados pela data de contratação.
+R: primeiro_nome: 'Madeleine',
+  sobrenome: 'Prior',
+  data_contratacao: ISODate('1987-06-17T00:00:00.000Z')
+   primeiro_nome: 'Jennifer',
+  sobrenome: 'Whalen',
+  data_contratacao: ISODate('1987-09-17T00:00:00.000Z')
+  primeiro_nome: 'Neena',
+  sobrenome: 'Kochhar',
+  data_contratacao: ISODate('1989-09-21T00:00:00.000Z')
+    primeiro_nome: 'Alexander',
+  sobrenome: 'Hunold',
+  data_contratacao: ISODate('1990-01-03T00:00:00.000Z')
+   primeiro_nome: 'Bruce',
+  sobrenome: 'Ernst',
+  data_contratacao: ISODate('1991-05-21T00:00:00.000Z')
+
+  db.funcionarios.find(
+  {},
+  {
+    primeiro_nome: 1,
+    sobrenome: 1,
+    data_contratacao: 1,
+    _id: 0
+  }
+).sort({
+  data_contratacao: 1
+}).limit(5)
 
 3.6 Quantos funcionários foram contratados na década de 1990 (entre 1990-1999)?
+R:37
+db.funcionarios.countDocuments({
+  data_contratacao: {
+    $gte: ISODate("1990-01-01T00:00:00.000Z"),
+    $lt: ISODate("2000-01-01T00:00:00.000Z")
+  }
+})
 
 3.7 Como a média salarial da Momento evoluiu ao longo dos anos? Agrupe por ano de contratação e calcule a média salarial.
+R:   media_salarial: Decimal128('14200.00'),
+  total_funcionarios: 2,
+  ano: 1987
+  media_salarial: Decimal128('17000.00'),
+  total_funcionarios: 1,
+  ano: 1989
+   media_salarial: Decimal128('9000.00'),
+  total_funcionarios: 1,
+  ano: 1990
+    media_salarial: Decimal128('6000.00'),
+  total_funcionarios: 1,
+  ano: 1991
+    media_salarial: Decimal128('17000.00'),
+  total_funcionarios: 1,
+  ano: 1993
+    media_salarial: Decimal128('12847.50'),
+  total_funcionarios: 8,
+  ano: 1994
+  media_salarial: Decimal128('5500.00'),
+  total_funcionarios: 2,
+  ano: 1995
+    media_salarial: Decimal128('9750.00'),
+  total_funcionarios: 4,
+  ano: 1996
+   media_salarial: Decimal128('6450.00'),
+  total_funcionarios: 10,
+  ano: 1997
+    media_salarial: Decimal128('5816.666666666666666666666666666667'),
+  total_funcionarios: 6,
+  ano: 1998
+    media_salarial: Decimal128('5150.00'),
+  total_funcionarios: 4,
+  ano: 1999
+    media_salarial: Decimal128('19650.00'),
+  total_funcionarios: 1,
+  ano: 2000
+   media_salarial: Decimal128('13687.50125'),
+  total_funcionarios: 8,
+  ano: 2024
+   media_salarial: 5000,
+  total_funcionarios: 1,
+  ano: 2026
+  
+
+db.funcionarios.aggregate([
+  {
+    $match: {
+      data_contratacao: { $type: "date" }
+    }
+  },
+  {
+    $group: {
+      _id: { $year: "$data_contratacao" },
+      media_salarial: { $avg: "$salario" },
+      total_funcionarios: { $sum: 1 }
+    }
+  },
+  {
+    $sort: { _id: 1 }
+  },
+  {
+    $project: {
+      _id: 0,
+      ano: "$_id",
+      media_salarial: 1,
+      total_funcionarios: 1
+    }
+  }
+])
 
 Nível 4: Operações e Escritórios
 4.1 Qual é o custo total de suprimentos em cada escritório? Ordene do mais caro ao mais barato.
+R:  escritorio: 'Baxter Building',
+  custo_total: Decimal128('20839750.00')
+  escritorio: 'Umbrella Corp',
+  custo_total: Decimal128('6155000.00')
+    escritorio: "Shuri's Palace",
+  custo_total: Decimal128('5147785.00')
+  escritorio: 'Sala Winter',
+  custo_total: Decimal128('4443121.00')
+  escritorio: 'Wayne Offices',
+  custo_total: Decimal128('4164500.00')
+   escritorio: 'House of Mystery escritorios',
+  custo_total: Decimal128('140000.00')
+    escritorio: 'Arkham Base',
+  custo_total: Decimal128('100000.00')
+
+  db.escritorio.aggregate([
+  {
+    $unwind: "$suprimentos"
+  },
+  {
+    $group: {
+      _id: "$_id",
+      escritorio: { $first: "$nome" },
+      custo_total: {
+        $sum: {
+          $multiply: [
+            "$suprimentos.quantidade",
+            "$suprimentos.custo"
+          ]
+        }
+      }
+    }
+  },
+  {
+    $sort: {
+      custo_total: -1
+    }
+  },
+  {
+    $project: {
+      _id: 0,
+      escritorio: 1,
+      custo_total: 1
+    }
+  }
+])
 
 4.2 Qual escritório possui a maior quantidade de diferentes tipos de suprimentos?
+R:  tipos_suprimentos: 4,
+  escritorio: 'Wayne Offices'
+
+db.escritorio.aggregate([
+  {
+    $project: {
+      nome: 1,
+      tipos_suprimentos: {
+        $size: {
+          $setUnion: [
+            {
+              $map: {
+                input: { $ifNull: ["$suprimentos", []] },
+                as: "item",
+                in: "$$item.nome"
+              }
+            },
+            []
+          ]
+        }
+      }
+    }
+  },
+  {
+    $sort: {
+      tipos_suprimentos: -1
+    }
+  },
+  {
+    $limit: 1
+  },
+  {
+    $project: {
+      _id: 0,
+      escritorio: "$nome",
+      tipos_suprimentos: 1
+    }
+  }
+])
 
 4.3 Qual é o suprimento mais caro (considerando preço unitário) em toda a empresa?
+R: escritorio: 'Umbrella Corp',
+  suprimento: 'Computers',
+  preco_unitario: Decimal128('200000.00')
+  
+db.escritorio.aggregate([
+  {
+    $unwind: "$suprimentos"
+  },
+  {
+    $sort: {
+      "suprimentos.custo": -1
+    }
+  },
+  {
+    $limit: 1
+  },
+  {
+    $project: {
+      _id: 0,
+      escritorio: "$nome",
+      suprimento: "$suprimentos.nome",
+      preco_unitario: "$suprimentos.custo"
+    }
+  }
+])
 
 4.4 Calcule o valor total do inventário de suprimentos da empresa (quantidade × preço unitário de todos os itens em todos os escritórios).
+R:   valor_total_inventario: Decimal128('40990156.00')
+
+db.escritorio.aggregate([
+  {
+    $unwind: "$suprimentos"
+  },
+  {
+    $group: {
+      _id: null,
+      valor_total_inventario: {
+        $sum: {
+          $multiply: [
+            "$suprimentos.quantidade",
+            "$suprimentos.custo"
+          ]
+        }
+      }
+    }
+  },
+  {
+    $project: {
+      _id: 0,
+      valor_total_inventario: 1
+    }
+  }
+])
 
 Nível 5: Produtos e Vendas
 5.1 Quais produtos foram vendidos pela Momento? Liste todos os produtos únicos.
-
+R:    nome: 'Batarangs Oficiais',
+  produto_id: 12
+    nome: 'Capacete do Homem-Formiga',
+  produto_id: 4
+   nome: 'Fake Batarang',
+  produto_id: 2
+  nome: 'Lança-Teias',
+  produto_id: 3
+    nome: 'Laço da Honestidade',
+  produto_id: 11
+  nome: 'Laço da Verdade',
+  produto_id: 6
+    nome: 'Nulificador Total',
+  produto_id: 5
+   nome: 'Sabre de Luz (Mace Windu)',
+  produto_id: 8
+   nome: 'Sentinelas do Bolivar Trask',
+  produto_id: 9
+nome: 'Uniforme de Moléculas Instáveis',
+  produto_id: 10
+   nome: 'Uniforme do Superman',
+  produto_id: 1
+  
+db.vendas.aggregate([
+  {
+    $lookup: {
+      from: "produtos",
+      localField: "produto_id",
+      foreignField: "_id",
+      as: "produto"
+    }
+  },
+  {
+    $unwind: "$produto"
+  },
+  {
+    $group: {
+      _id: "$produto._id",
+      nome: { $first: "$produto.nome" }
+    }
+  },
+  {
+    $project: {
+      _id: 0,
+      produto_id: "$_id",
+      nome: 1
+    }
+  },
+  {
+    $sort: {
+      nome: 1
+    }
+  }
+])
 5.2 Qual é o produto mais vendido (maior quantidade total)?
+R:   quantidade_total: 177,
+  produto: 'Uniforme do Superman'
 
+db.vendas.aggregate([
+  {
+    $group: {
+      _id: "$produto_id",
+      quantidade_total: { $sum: "$quantidade" }
+    }
+  },
+  {
+    $lookup: {
+      from: "produtos",
+      localField: "_id",
+      foreignField: "_id",
+      as: "produto"
+    }
+  },
+  {
+    $unwind: "$produto"
+  },
+  {
+    $sort: {
+      quantidade_total: -1
+    }
+  },
+  {
+    $limit: 1
+  },
+  {
+    $project: {
+      _id: 0,
+      produto: "$produto.nome",
+      quantidade_total: 1
+    }
+  }
+])
 5.3 Qual é o produto menos vendido?
+R:  quantidade_total: 3,
+  produto: 'Batarangs Oficiais'
+  
+db.vendas.aggregate([
+  {
+    $group: {
+      _id: "$produto_id",
+      quantidade_total: { $sum: "$quantidade" }
+    }
+  },
+  {
+    $lookup: {
+      from: "produtos",
+      localField: "_id",
+      foreignField: "_id",
+      as: "produto"
+    }
+  },
+  {
+    $unwind: "$produto"
+  },
+  {
+    $sort: {
+      quantidade_total: 1
+    }
+  },
+  {
+    $limit: 1
+  },
+  {
+    $project: {
+      _id: 0,
+      produto: "$produto.nome",
+      quantidade_total: 1
+    }
+  }
+])
 
 5.4 Pensando na relação quantidade × valor unitário, qual produto gerou mais receita para a empresa?
+R:   quantidade_total: 177,
+  produto: 'Uniforme do Superman',
+  preco_unitario: Decimal128('300.13'),
+  receita_total: Decimal128('53123.01')
+
+  db.vendas.aggregate([
+  {
+    $group: {
+      _id: "$produto_id",
+      quantidade_total: { $sum: "$quantidade" }
+    }
+  },
+  {
+    $lookup: {
+      from: "produtos",
+      localField: "_id",
+      foreignField: "_id",
+      as: "produto"
+    }
+  },
+  {
+    $unwind: "$produto"
+  },
+  {
+    $project: {
+      produto: "$produto.nome",
+      quantidade_total: 1,
+      preco_unitario: "$produto.preco_unitario",
+      receita_total: {
+        $multiply: [
+          "$quantidade_total",
+          "$produto.preco_unitario"
+        ]
+      }
+    }
+  },
+  {
+    $sort: {
+      receita_total: -1
+    }
+  },
+  {
+    $limit: 1
+  },
+  {
+    $project: {
+      _id: 0,
+      produto: 1,
+      quantidade_total: 1,
+      preco_unitario: 1,
+      receita_total: 1
+    }
+  }
+])
 
 5.5 Qual é o produto mais caro (maior preço unitário) no catálogo?
+R: nome: 'Sabre de Luz (Mace Windu)',
+  preco_unitario: Decimal128('990.29')
+  db.produtos.find(
+  {},
+  {
+    _id: 0,
+    nome: 1,
+    preco_unitario: 1
+  }
+).sort({
+  preco_unitario: -1
+}).limit(1)
 
 5.6 Qual foi o faturamento total da empresa em vendas?
+R: faturamento_total: Decimal128('159186.48')
+
+db.vendas.aggregate([
+  {
+    $lookup: {
+      from: "produtos",
+      localField: "produto_id",
+      foreignField: "_id",
+      as: "produto"
+    }
+  },
+  {
+    $unwind: "$produto"
+  },
+  {
+    $group: {
+      _id: null,
+      faturamento_total: {
+        $sum: {
+          $multiply: [
+            "$quantidade",
+            "$produto.preco_unitario"
+          ]
+        }
+      }
+    }
+  },
+  {
+    $project: {
+      _id: 0,
+      faturamento_total: 1
+    }
+  }
+])
 
 5.7 Quantas vendas foram realizadas no mês de junho de 2023?
+R: 9
+db.vendas.countDocuments({
+  data_venda: {
+    $gte: ISODate("2023-06-01T00:00:00.000Z"),
+    $lt: ISODate("2023-07-01T00:00:00.000Z")
+  }
+})
 
 5.8 Qual vendedor realizou mais vendas (em quantidade de transações)?
+R: quantidade_vendas: 4,
+  vendedor: 'Jonathon Taylor'
+db.vendas.aggregate([
+  {
+    $group: {
+      _id: "$funcionario_id",
+      quantidade_vendas: { $sum: 1 }
+    }
+  },
+  {
+    $lookup: {
+      from: "funcionarios",
+      localField: "_id",
+      foreignField: "_id",
+      as: "funcionario"
+    }
+  },
+  {
+    $unwind: "$funcionario"
+  },
+  {
+    $sort: {
+      quantidade_vendas: -1
+    }
+  },
+  {
+    $limit: 1
+  },
+  {
+    $project: {
+      _id: 0,
+      vendedor: {
+        $concat: [
+          "$funcionario.primeiro_nome",
+          " ",
+          "$funcionario.sobrenome"
+        ]
+      },
+      quantidade_vendas: 1
+    }
+  }
+])
 
 5.9 Qual vendedor gerou mais receita para a empresa?
+R: receita_total: Decimal128('71582.80'),
+  vendedor: 'Jonathon Taylor'
+
+db.vendas.aggregate([
+  {
+    $lookup: {
+      from: "produtos",
+      localField: "produto_id",
+      foreignField: "_id",
+      as: "produto"
+    }
+  },
+  {
+    $unwind: "$produto"
+  },
+  {
+    $group: {
+      _id: "$funcionario_id",
+      receita_total: {
+        $sum: {
+          $multiply: [
+            "$quantidade",
+            "$produto.preco_unitario"
+          ]
+        }
+      }
+    }
+  },
+  {
+    $lookup: {
+      from: "funcionarios",
+      localField: "_id",
+      foreignField: "_id",
+      as: "funcionario"
+    }
+  },
+  {
+    $unwind: "$funcionario"
+  },
+  {
+    $sort: {
+      receita_total: -1
+    }
+  },
+  {
+    $limit: 1
+  },
+  {
+    $project: {
+      _id: 0,
+      vendedor: {
+        $concat: [
+          "$funcionario.primeiro_nome",
+          " ",
+          "$funcionario.sobrenome"
+        ]
+      },
+      receita_total: 1
+    }
+  }
+])
 
 Nível 6: Operações de Atualização
 A empresa está crescendo e mudanças precisam acontecer!
