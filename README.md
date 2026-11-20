@@ -1,6 +1,6 @@
 # Momento_database
 
-Nível 1: Conhecendo a Empresa
+# Nível 1: Conhecendo a Empresa
 Seu Primeiro Dia na Momento
 Você acabou de ser contratado pela Momento! Vamos começar incluindo você no sistema.
 
@@ -23,28 +23,208 @@ R: 50 funcionários
 db.funcionarios.countDocuments()
 
 1.3 Quantos funcionários trabalham especificamente no Departamento de Tecnologia?
-R:
+R: 8 funcinários
+
+db.funcionarios.countDocuments({
+  departamento_id: 6
 
 1.4 Liste todos os departamentos que existem na empresa. Quantos são?
+R:'Administração, 'Marketing', Suprimentos, Recursos Humanos, Transportes, Tecnologia, Relações Públicas, Vendas, Executivo, Finanças, Contabilidade, Biotecnologia e Tecnologias Avançadas.
+
+db.departamentos.find().pretty()
 
 1.5 Quantos escritórios a Momento possui? Em quais países?
+R: 9, 'CA', 'DE', 'UK', 'US', 'WA'
 
-Nível 2: Análise Financeira Básica
+db.escritorio.countDocuments()
+db.escritorio.distinct("pais_id")
+
+
+# Nível 2: Análise Financeira Básica
 O CFO precisa de relatórios urgentes sobre os custos da empresa.
 
 2.1 Quantos funcionários trabalham no Departamento de Vendas?
+R: 5
+db.funcionarios.aggregate([
+  {
+    $lookup: {
+      from: "departamentos",
+      localField: "departamento_id",
+      foreignField: "_id",
+      as: "dados_departamento"
+    }
+  },
+  {
+    $unwind: "$dados_departamento"
+  },
+  {
+    $match: {
+      "dados_departamento.nome": "Vendas"
+    }
+  },
+  {
+    $count: "total_funcionarios"
+  }
+])
 
 2.2 Qual é o custo total com salários do Departamento de Vendas?
+R: custo_total_salarios: Decimal128('51500.00')
+
+db.funcionarios.aggregate([
+  {
+    $lookup: {
+      from: "departamentos",
+      localField: "departamento_id",
+      foreignField: "_id",
+      as: "dados_departamento"
+    }
+  },
+  {
+    $unwind: "$dados_departamento"
+  },
+  {
+    $match: {
+      "dados_departamento.nome": "Vendas"
+    }
+  },
+  {
+    $group: {
+      _id: null,
+      custo_total_salarios: {
+        $sum: "$salario"
+      }
+    }
+  }
+])
 
 2.3 Qual é a média salarial da empresa, excluindo os cargos de CEO, CMO e CFO?
+R:   media_salarial: Decimal128('9355.000217391304347826086956521739')
+
+db.funcionarios.aggregate([
+  {
+    $lookup: {
+      from: "cargos",
+      localField: "cargo_id",
+      foreignField: "_id",
+      as: "dados_cargo"
+    }
+  },
+  {
+    $unwind: "$dados_cargo"
+  },
+  {
+    $match: {
+      "dados_cargo.nome": {
+        $nin: ["CEO", "CMO", "CFO"]
+      }
+    }
+  },
+  {
+    $group: {
+      _id: null,
+      media_salarial: {
+        $avg: "$salario"
+      }
+    }
+  }
+])
 
 2.4 Qual é a média salarial do Departamento de Tecnologia?
+R:   media_salarial: Decimal128('6787.50')
+db.funcionarios.aggregate([
+  {
+    $lookup: {
+      from: "departamentos",
+      localField: "departamento_id",
+      foreignField: "_id",
+      as: "dados_departamento"
+    }
+  },
+  {
+    $unwind: "$dados_departamento"
+  },
+  {
+    $match: {
+      "dados_departamento.nome": "Tecnologia"
+    }
+  },
+  {
+    $group: {
+      _id: "$dados_departamento.nome",
+      media_salarial: {
+        $avg: "$salario"
+      }
+    }
+  }
+])
 
 2.5 Qual departamento possui a maior média salarial?
+R:  _id: 'Tecnologias Avançadas',
+  media_salarial: Decimal128('21657.50')
+
+  db.funcionarios.aggregate([
+  {
+    $lookup: {
+      from: "departamentos",
+      localField: "departamento_id",
+      foreignField: "_id",
+      as: "dados_departamento"
+    }
+  },
+  {
+    $unwind: "$dados_departamento"
+  },
+  {
+    $group: {
+      _id: "$dados_departamento.nome",
+      media_salarial: {
+        $avg: "$salario"
+      }
+    }
+  },
+  {
+    $sort: {
+      media_salarial: -1
+    }
+  },
+  {
+    $limit: 1
+  }
+])
 
 2.6 Qual departamento possui o menor número de funcionários?
+R:  _id: 1,
+  nome: 'Administração',
+  quantidade_funcionarios: 1
 
-Nível 3: Recursos Humanos
+  db.departamentos.aggregate([
+  {
+    $lookup: {
+      from: "funcionarios",
+      localField: "_id",
+      foreignField: "departamento_id",
+      as: "funcionarios_departamento"
+    }
+  },
+  {
+    $project: {
+      nome: 1,
+      quantidade_funcionarios: {
+        $size: "$funcionarios_departamento"
+      }
+    }
+  },
+  {
+    $sort: {
+      quantidade_funcionarios: 1
+    }
+  },
+  {
+    $limit: 1
+  }
+])
+
+# Nível 3: Recursos Humanos
 O RH está fazendo uma análise demográfica da empresa.
 
 3.1 Quantos funcionários da empresa Momento possuem cônjuges?
