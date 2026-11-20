@@ -392,7 +392,8 @@ db.funcionarios.aggregate([
   }
 ])
 
-Nível 4: Operações e Escritórios
+# Nível 4: Operações e Escritórios
+
 4.1 Qual é o custo total de suprimentos em cada escritório? Ordene do mais caro ao mais barato.
 R:  escritorio: 'Baxter Building',
   custo_total: Decimal128('20839750.00')
@@ -537,7 +538,8 @@ db.escritorio.aggregate([
   }
 ])
 
-Nível 5: Produtos e Vendas
+# Nível 5: Produtos e Vendas
+
 5.1 Quais produtos foram vendidos pela Momento? Liste todos os produtos únicos.
 R:    nome: 'Batarangs Oficiais',
   produto_id: 12
@@ -892,21 +894,106 @@ db.vendas.aggregate([
   }
 ])
 
-Nível 6: Operações de Atualização
+# Nível 6: Operações de Atualização
 A empresa está crescendo e mudanças precisam acontecer!
 
 6.1 Um novo departamento foi criado: Inovações. Ele será alocado no escritório "Wayne Offices". Adicione-o ao banco de dados.
+R: db.departamentos.insertOne({
+  nome: "Inovações",
+  escritorio_id: 1800
+})
 
 6.2 O departamento de Inovações está sem funcionários. Transfira 2 funcionários do departamento de Tecnologia para Inovações.
+R: db.funcionarios.updateMany(
+  {
+    _id: {
+      $in: [216, 214]
+    }
+  },
+  {
+    $set: {
+      departamento_id: ('6affcea97b16be3ebdd858fc')
+    }
+  }
+)
 
 6.3 A empresa decidiu dar um aumento de 10% para todos os funcionários do departamento de Tecnologia. Atualize os salários.
+R: db.funcionarios.updateMany(
+  { departamento_id: 6 },
+  {
+    $mul: {
+      salario: NumberDecimal("1.10")
+    }
+  }
+)
 
 6.4 O funcionário "Bruce Ernst" foi promovido a "Senior Web Developer" e recebeu um aumento para $5.000. Atualize suas informações.
+R:  primeiro_nome: 'Bruce',
+  sobrenome: 'Ernst',
+  salario: Decimal128('7000.00'),
+  cargo: 'Senior Web Developer'
+  
+db.cargos.insertOne({
+  nome: "Senior Web Developer",
+  salario_minimo: NumberDecimal("7000.00"),
+  salario_maximo: NumberDecimal("15000.00")
+})
 
 6.5 Adicione um novo suprimento ao escritório "Wayne Offices": 15 unidades de "Headsets" com preço unitário de $150 cada.
+R: db.escritorio.updateOne(
+  { nome: "Wayne Offices" },
+  {
+    $push: {
+      suprimentos: {
+        nome: "Headsets",
+        quantidade: 15,
+        custo: NumberDecimal("150.00")
+      }
+    }
+  }
+)
 
 6.6 Todos os funcionários contratados antes de 1990 estão aposentando. Remova-os do banco de dados (CUIDADO: execute um find antes para ver quantos serão afetados!).
+R: primeiro_nome: 'Madeleine',
+  sobrenome: 'Prior',
+  data_contratacao: ISODate('1987-06-17T00:00:00.000Z')
 
+primeiro_nome: 'Jennifer',
+  sobrenome: 'Whalen',
+  data_contratacao: ISODate('1987-09-17T00:00:00.000Z')
+db.funcionarios.find(
+
+ primeiro_nome: 'Neena',
+  sobrenome: 'Kochhar',
+  data_contratacao: ISODate('1989-09-21T00:00:00.000Z')
+
+  3 funcionários serão excluidos
+  {
+    data_contratacao: {
+      $lt: ISODate("1990-01-01T00:00:00.000Z")
+    }
+  },
+  {
+    primeiro_nome: 1,
+    sobrenome: 1,
+    data_contratacao: 1,
+    _id: 0
+  }
+).sort({
+  data_contratacao: 1
+})
+
+db.funcionarios.countDocuments({
+  data_contratacao: {
+    $lt: ISODate("1990-01-01T00:00:00.000Z")
+  }
+})
+
+db.funcionarios.deleteMany({
+  data_contratacao: {
+    $lt: ISODate("1990-01-01T00:00:00.000Z")
+  }
+})
 Nível 7: Análise Avançada com Agregações
 7.1 Crie um relatório mostrando cada departamento com: nome do departamento, número de funcionários, salário total e média salarial.
 
